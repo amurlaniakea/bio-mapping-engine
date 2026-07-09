@@ -33,7 +33,7 @@ jobs:
       - name: Run Tests (pytest)
         run: |
           export PYTHONPATH=$PYTHONPATH:$(pwd)
-          pytest tests/
+          pytest tests/ --cov=src --cov-report=xml
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@v5.0.0
