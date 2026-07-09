@@ -109,3 +109,4 @@ This project is licensed under the **GNU Affero General Public License v3.0 (AGP
 ## 👤 Author
 
 **Pedro Sordo Martínez** — [amurlaniakea@gmail.com](mailto:amurlaniakea@gmail.com)
+# Trigger Analysis
