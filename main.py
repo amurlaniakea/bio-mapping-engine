@@ -11,6 +11,32 @@ from src.parser.segmenter import segment_symptoms
 from src.parser.mapper import map_segment
 
 
+def merge_duplicates(items: list) -> list:
+    merged = {}
+    for item in items:
+        key = item["sintoma_canonico"]
+        if key not in merged:
+            merged[key] = item
+        else:
+            # Fusionar interpretaciones, descartando duplicados vacíos
+            existing = merged[key]
+            for interp in item["interpretaciones"]:
+                is_empty = not interp["conflicto_emocional"] and not interp["modelo_mental"] and not interp["etapa_biologica"]
+                if is_empty:
+                    # Solo agregar si NO hay ya una interpretación con contenido del mismo autor
+                    ya_tiene_contenido = any(
+                        e["autor"] == interp["autor"] and (e["conflicto_emocional"] or e["modelo_mental"])
+                        for e in existing["interpretaciones"]
+                    )
+                    if not ya_tiene_contenido:
+                        existing["interpretaciones"].append(interp)
+                else:
+                    existing["interpretaciones"].append(interp)
+            # Fusionar zonas (unión, sin duplicados)
+            existing["zonas_detectadas"] = list(set(existing["zonas_detectadas"]) | set(item["zonas_detectadas"]))
+    return list(merged.values())
+
+
 def run_pipeline(input_path: str, output_path: str):
     print(f"🚀 Starting Bio-Mapping Engine Pipeline...")
     print(f"📂 Input: {input_path}")
@@ -58,7 +84,11 @@ def run_pipeline(input_path: str, output_path: str):
         except Exception as e:
             print(f"⚠️ Warning: Failed to map segment {idx}: {e}")
 
-    # 5. Save Output
+    # 5. Deduplication (Merge duplicates)
+    print("🔄 Merging duplicate symptoms...")
+    processed_data = merge_duplicates(processed_data)
+
+    # 6. Save Output
     print(f"💾 Saving {len(processed_data)} records to {output_path}...")
     try:
         os.makedirs(os.path.dirname(output_path), exist_ok=True)

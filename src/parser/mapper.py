@@ -149,6 +149,11 @@ def _get_interpretations(content: str, header_val: str) -> list[dict]:
     return interpretations
 
 
+def normalize_symptom(name: str) -> str:
+    """Remove leading articles from symptom name."""
+    return re.sub(r'^(EL|LA|LOS|LAS)\s+', '', name.strip(), flags=re.IGNORECASE).strip()
+
+
 def _apply_global_fallback(mapped_item: dict, content: str, header_val: str) -> None:
     """Apply fallback if no author-based interpretations found."""
     for interp in mapped_item["interpretaciones"]:
@@ -208,7 +213,7 @@ def map_segment(segment: dict) -> dict:
 
     mapped_item = {
         "id": str(uuid.uuid4()),
-        "sintoma_canonico": header,
+        "sintoma_canonico": normalize_symptom(header),
         "zonas_detectadas": _detect_zones(header, content),
         "sistema_padre": "Desconocido",
         "interpretaciones": _get_interpretations(content, header),
