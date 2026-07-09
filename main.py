@@ -10,10 +10,11 @@ from src.parser.cleaner import clean_text
 from src.parser.segmenter import segment_symptoms
 from src.parser.mapper import map_segment
 
+
 def run_pipeline(input_path: str, output_path: str):
     print(f"🚀 Starting Bio-Mapping Engine Pipeline...")
     print(f"📂 Input: {input_path}")
-    
+
     if not os.path.exists(input_path):
         print(f"❌ Error: Input file not found at {input_path}")
         return
@@ -49,7 +50,8 @@ def run_pipeline(input_path: str, output_path: str):
     for idx, segment in enumerate(segments):
         try:
             mapped = map_segment(segment)
-            processed_data.append(mapped)
+            if mapped is not None:
+                processed_data.append(mapped)
             if (idx + 1) % 50 == 0:
                 print(f"   ... mapped {idx+1}/{len(segments)} segments")
         except Exception as e:
@@ -59,14 +61,15 @@ def run_pipeline(input_path: str, output_path: str):
     print(f"💾 Saving {len(processed_data)} records to {output_path}...")
     try:
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
-        with open(output_path, 'w', encoding='utf-8') as f:
+        with open(output_path, "w", encoding="utf-8") as f:
             json.dump(processed_data, f, indent=2, ensure_ascii=False)
         print("✅ Pipeline completed successfully!")
     except Exception as e:
         print(f"❌ Error saving output: {e}")
 
+
 if __name__ == "__main__":
     INPUT_FILE = "data/raw/Biodescodificacion.pdf"
     OUTPUT_FILE = "data/processed/processed_data.json"
-    
+
     run_pipeline(INPUT_FILE, OUTPUT_FILE)
