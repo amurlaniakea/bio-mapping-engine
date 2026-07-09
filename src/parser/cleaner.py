@@ -1,35 +1,37 @@
 import re
 
 
-def clean_text(text: str) -> str:
+class CleanText:
     """
-    Cleans raw text extracted from the PDF.
-    Removes page numbers, extra whitespace, and standardizes newlines.
+    A utility class to clean raw text extracted from the PDF.
     """
-    if not text:
-        return ""
 
-    # 1. Remove page markers if they exist (e.g., "--- PAGE 26 ---")
-    text = re.sub(r"--- PAGE \d+ ---", "", text)
+    def clean(self, text: str) -> str:
+        """
+        Removes page numbers, extra whitespace, and standardizes newlines.
+        """
+        if not text:
+            return ""
 
-    # 2. Remove standalone page numbers (lines that only contain digits)
-    # This handles the "26", "27", etc. seen in the text
-    text = re.sub(r"^\s*\d+\s*$", "", text, flags=re.MULTILINE)
+        # 1. Remove page markers if they exist (e.g., "--- PAGE 26 ---")
+        text = re.sub(r"--- PAGE \d+ ---", "", text)
 
-    # 3. Normalize whitespace: replace multiple spaces/tabs with a single space
-    text = re.sub(r"[ \t]+", " ", text)
+        # 2. Remove standalone page numbers (lines that only contain digits)
+        text = re.sub(r"^\s*\d+\s*$", "", text, flags=re.MULTILINE)
 
-    # 4. Normalize newlines: replace 3+ newlines with just 2 (to keep paragraph breaks but remove excessive gaps)
-    text = re.sub(r"\n\s*\n\s*\n+", "\n\n", text)
+        # 3. Normalize whitespace: replace multiple spaces/tabs with a single space
+        text = re.sub(r"[ \t]+", " ", text)
 
-    # 5. Strip leading/trailing whitespace from the whole document
-    text = text.strip()
+        # 4. Normalize newlines: replace 3+ newlines with just 2
+        text = re.sub(r"\n\s*\n\s*\n+", "\n\n", text)
 
-    return text
+        # 5. Strip leading/trailing whitespace from the whole document
+        return text.strip()
 
 
 if __name__ == "__main__":
     # Quick test
+    cleaner = CleanText()
     sample = "  \n  26  \n  ACNÉ \n  \n  \n  Conflicto : Conflicto de identidad...  "
     print(f"Original: '{sample}'")
-    print(f"Cleaned:  '{clean_text(sample)}'")
+    print(f"Cleaned:  '{cleaner.clean(sample)}'")
