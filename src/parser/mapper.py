@@ -57,50 +57,31 @@ def extract_field(text: str, patterns: list[str]) -> str:
     return ""
 
 
-def map_segment(segment: dict) -> dict:
-    """
-    Transforms a raw segment (header + content) into a structured dictionary.
-    """
-    header = segment["header"].strip().upper()
-    content = segment["content"]
-
-    # Filter out navigation/noise segments
-    BLACKLIST = {
-        "DE", "A", "EL", "LA", "LOS", "LAS", "DICCIONARIO",
-        "INDICE", "ÍNDICE", "PÁGINA", "PAGINA"
-    }
-    if len(header) < 3 or header in BLACKLIST:
-        return None
-
-    # Initialize the structured object
-    mapped_item = {
-        "id": str(uuid.uuid4()),
-        "sintoma_canonico": header,
-        "zonas_detectadas": [],
-        "sistema_padre": "Desconocido",
-        "interpretaciones": [],
-        "keywords": []
-    }
-
-    # 1. Detect Zones (Anatomical Mapping)
+def _detect_zones(header: str, content: str) -> list[str]:
+    """Detect anatomical zones from header and content."""
+    zones = []
     content_lower = content.lower()
+    header_lower = header.lower()
     for zone, keywords in ANATOMICAL_KEYWORDS.items():
         if any(kw in content_lower for kw in keywords) or any(
-            kw in header.lower() for kw in keywords
+            kw in header_lower for kw in keywords
         ):
-            if zone not in mapped_item["zonas_detectadas"]:
-                mapped_item["zonas_detectadas"].append(zone)
+            if zone not in zones:
+                zones.append(zone)
+    return zones
 
-    # 2. Split content by Author to create multiple interpretations
+
+def _get_interpretations(content: str) -> list[dict]:
+    """Extract author-based interpretations."""
     author_pattern = r'(' + '|'.join([re.escape(a) for a in AUTHORS]) + r')[\s:]+'
     parts = re.split(author_pattern, content, flags=re.IGNORECASE)
+    interpretations = []
 
     if len(parts) > 1:
         for i in range(1, len(parts), 2):
             raw_author_name = parts[i].strip()
             auth_map = {a.upper(): a for a in AUTHORS}
             author_name = auth_map.get(raw_author_name.upper(), raw_author_name)
-
             author_content = parts[i+1] if i+1 < len(parts) else ""
 
             interpretation = {
@@ -127,7 +108,7 @@ def map_segment(segment: dict) -> dict:
                 ),
             }
 
-            # Fallback para autores sin prefijos o texto directo
+            # Fallback for authors without prefixes
             if not interpretation["conflicto_emocional"] and not interpretation["modelo_mental"]:
                 clean_content = author_content.strip()
                 if clean_content:
@@ -136,9 +117,10 @@ def map_segment(segment: dict) -> dict:
                         lines[0] + (" " + lines[1] if len(lines) > 1 else "")
                     ).strip()
 
-            mapped_item["interpretaciones"].append(interpretation)
+            interpretations.append(interpretation)
     else:
-        mapped_item["interpretaciones"].append({
+        # General fallback
+        interpretations.append({
             "autor": "General/No especificado",
             "conflicto_emocional": extract_field(
                 content,
@@ -159,8 +141,11 @@ def map_segment(segment: dict) -> dict:
             ),
             "etapa_biologica": extract_field(content, [r"(\d+[ªº]\s*Etapa.*)"]),
         })
+    return interpretations
 
-    # 3. GLOBAL FALLBACK
+
+def _apply_global_fallback(mapped_item: dict, content: str) -> None:
+    """Apply fallback if no author-based interpretations found."""
     for interp in mapped_item["interpretaciones"]:
         if not interp["conflicto_emocional"] and not interp["modelo_mental"]:
             if interp["autor"] == "General/No especificado":
@@ -190,5 +175,33 @@ def map_segment(segment: dict) -> dict:
                     lines[0] + (" " + lines[1] if len(lines) > 1 else "")
                 ).strip()
 
-    mapped_item["keywords"] = list(set(header.lower().split()))
+
+def map_segment(segment: dict) -> dict:
+    """
+    Transforms a raw segment (header + content) into a structured dictionary.
+    Refactored to reduce cognitive complexity and fix type-hinting issues.
+    """
+    header = segment.get("header", "").strip().upper()
+    content = segment.get("content", "")
+
+    # Filter out navigation/noise segments
+    BLACKLIST = {
+        "DE", "A", "EL", "LA", "LOS", "LAS", "DICCIONARIO",
+        "INDICE", "ÍNDICE", "PÁGINA", "PAGINA"
+    }
+
+    if len(header) < 3 or header in BLACKLIST:
+        return {"error": "Invalid segment structure"}
+
+    mapped_item = {
+        "id": str(uuid.uuid4()),
+        "sintoma_canonico": header,
+        "zonas_detectadas": _detect_zones(header, content),
+        "sistema_padre": "Desconocido",
+        "interpretaciones": _get_interpretations(content),
+        "keywords": list(set(header.lower().split()))
+    }
+
+    _apply_global_fallback(mapped_item, content)
+
     return mapped_item
