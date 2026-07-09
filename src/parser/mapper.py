@@ -36,6 +36,7 @@ ANATOMICAL_KEYWORDS = {
     "otros": ["órgano", "glándula", "hormona", "sistema"]
 }
 
+
 # Authors found in the document
 AUTHORS = ["Louise L. Hay", "Lisa Bourbeau", "Jacques Martel", "Enric Corbera", "Salomon Sellam"]
 
@@ -48,7 +49,7 @@ def extract_field(text: str, patterns: list[str]) -> str:
         match = re.search(pattern, text, re.IGNORECASE | re.MULTILINE)
         if match:
             start = match.end()
-            lines = text[start:].split('\n')
+            lines = text[start:].split("\n")
             if len(lines) > 1 and lines[1].strip():
                 field_markers = ["conflicto", "causa", "modelo", "bloqueo", "etapa", "resentir"]
                 if not any(marker in lines[1].lower() for marker in field_markers):
@@ -71,7 +72,7 @@ def _detect_zones(header: str, content: str) -> list[str]:
     return zones
 
 
-def _get_interpretations(content: str) -> list[dict]:
+def _get_interpretations(content: str, header_val: str) -> list[dict]:
     """Extract author-based interpretations."""
     author_pattern = r'(' + '|'.join([re.escape(a) for a in AUTHORS]) + r')[\s:]+'
     parts = re.split(author_pattern, content, flags=re.IGNORECASE)
@@ -108,14 +109,18 @@ def _get_interpretations(content: str) -> list[dict]:
                 ),
             }
 
-            # Fallback for authors without prefixes
+            # Fallback para autores sin prefijos o texto directo
             if not interpretation["conflicto_emocional"] and not interpretation["modelo_mental"]:
                 clean_content = author_content.strip()
                 if clean_content:
                     lines = clean_content.split("\n")
-                    interpretation["conflicto_emocional"] = (
-                        lines[0] + (" " + lines[1] if len(lines) > 1 else "")
-                    ).strip()
+                    content_to_use = lines[0].strip()
+                    if len(lines) > 1:
+                        content_to_use += " " + lines[1].strip()
+
+                    # LIMPIEZA CRÍTICA: Eliminar el prefijo del síntoma si se ha colado
+                    header_pattern = re.compile(f"^{re.escape(header_val)}", re.IGNORECASE)
+                    interpretation["conflicto_emocional"] = header_pattern.sub("", content_to_use).strip()
 
             interpretations.append(interpretation)
     else:
@@ -144,7 +149,7 @@ def _get_interpretations(content: str) -> list[dict]:
     return interpretations
 
 
-def _apply_global_fallback(mapped_item: dict, content: str) -> None:
+def _apply_global_fallback(mapped_item: dict, content: str, header_val: str) -> None:
     """Apply fallback if no author-based interpretations found."""
     for interp in mapped_item["interpretaciones"]:
         if not interp["conflicto_emocional"] and not interp["modelo_mental"]:
@@ -171,15 +176,24 @@ def _apply_global_fallback(mapped_item: dict, content: str) -> None:
 
             if target_text.strip():
                 lines = target_text.strip().split("\n")
-                interp["conflicto_emocional"] = (
-                    lines[0] + (" " + lines[1] if len(lines) > 1 else "")
-                ).strip()
+                content_part = lines[0].strip()
+
+                # Limpiar prefijo del header
+                header_pattern = re.compile(f"^{re.escape(header_val)}", re.IGNORECASE)
+                content_part = header_pattern.sub("", content_part).strip()
+
+                if content_part:
+                    interp["conflicto_emocional"] = (
+                        content_part
+                        + (" " + lines[1].strip() if len(lines) > 1 else "")
+                    ).strip()
+                elif len(lines) > 1:
+                    interp["conflicto_emocional"] = lines[1].strip()
 
 
 def map_segment(segment: dict) -> dict:
     """
     Transforms a raw segment (header + content) into a structured dictionary.
-    Refactored to reduce cognitive complexity and fix type-hinting issues.
     """
     header = segment.get("header", "").strip().upper()
     content = segment.get("content", "")
@@ -189,7 +203,6 @@ def map_segment(segment: dict) -> dict:
         "DE", "A", "EL", "LA", "LOS", "LAS", "DICCIONARIO",
         "INDICE", "ÍNDICE", "PÁGINA", "PAGINA"
     }
-
     if len(header) < 3 or header in BLACKLIST:
         return {"error": "Invalid segment structure"}
 
@@ -198,10 +211,10 @@ def map_segment(segment: dict) -> dict:
         "sintoma_canonico": header,
         "zonas_detectadas": _detect_zones(header, content),
         "sistema_padre": "Desconocido",
-        "interpretaciones": _get_interpretations(content),
+        "interpretaciones": _get_interpretations(content, header),
         "keywords": list(set(header.lower().split()))
     }
 
-    _apply_global_fallback(mapped_item, content)
+    _apply_global_fallback(mapped_item, content, header)
 
     return mapped_item
