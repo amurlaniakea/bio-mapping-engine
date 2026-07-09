@@ -1,107 +1,43 @@
 import re
 import uuid
 
-# Expanded anatomical dictionary
+# Internal anatomical dictionary for first-pass zone detection
 ANATOMICAL_KEYWORDS = {
     "estómago": [
-        "estómago",
-        "gástrico",
-        "digestivo",
-        "vientre",
-        "panza",
-        "gastritis",
-        "duodeno",
-        "páncreas",
-        "hígado",
-        "riñón",
-        "vesícula",
-        "biliar",
+        "estómago", "gástrico", "digestivo", "vientre", "panza", "gastritis",
+        "duodeno", "páncreas", "hígado", "riñón", "vesícula", "biliar"
     ],
     "piel": [
-        "piel",
-        "dermis",
-        "cutáneo",
-        "epidermis",
-        "acné",
-        "psoriasis",
-        "manchas",
-        "poros",
-        "vello",
+        "piel", "dermis", "cutáneo", "epidermis", "acné", "psoriasis",
+        "manchas", "poros", "vello"
     ],
     "cara": [
-        "cara",
-        "rostro",
-        "facial",
-        "ojos",
-        "boca",
-        "labios",
-        "mejillas",
-        "lengua",
-        "nariz",
-        "oídos",
-        "oído",
-        "ojos",
+        "cara", "rostro", "facial", "ojos", "boca", "labios", "mejillas",
+        "lengua", "nariz", "oídos", "oído", "ojos"
     ],
     "espalda": ["espalda", "dorsal", "lumbar", "vertebra", "columna", "raquis"],
     "cuello": ["cuello", "cervical", "garganta", "faringe"],
     "pecho": [
-        "pecho",
-        "tórax",
-        "pulmón",
-        "respiratorio",
-        "tráquea",
-        "bronquio",
-        "respiración",
-        "aire",
+        "pecho", "tórax", "pulmón", "respiratorio", "tráquea", "bronquio",
+        "respiración", "aire"
     ],
     "extremidades": [
-        "brazo",
-        "pierna",
-        "mano",
-        "pie",
-        "dedos",
-        "extremidad",
-        "rodilla",
-        "tobillo",
-        "codo",
-        "cadera",
-        "fémur",
-        "articulación",
-        "hueso",
-        "músculo",
-        "tendón",
+        "brazo", "pierna", "mano", "pie", "dedos", "extremidad", "rodilla",
+        "tobillo", "codo", "cadera", "fémur", "articulación", "hueso",
+        "músculo", "tendón"
     ],
     "cerebro": [
-        "cerebro",
-        "mental",
-        "intelecto",
-        "mente",
-        "cognitivo",
-        "neurona",
-        "cráneo",
-        "cabeza",
-        "neurológico",
+        "cerebro", "mental", "intelecto", "mente", "cognitivo", "neurona",
+        "cráneo", "cabeza", "neurológico"
     ],
     "circulatorio": [
-        "corazón",
-        "arteria",
-        "vena",
-        "sangre",
-        "pulso",
-        "circulación",
-        "cardíaco",
+        "corazón", "arteria", "vena", "sangre", "pulso", "circulación", "cardíaco"
     ],
-    "otros": ["órgano", "glándula", "hormona", "sistema"],
+    "otros": ["órgano", "glándula", "hormona", "sistema"]
 }
 
 # Authors found in the document
-AUTHORS = [
-    "Louise L. Hay",
-    "Lisa Bourbeau",
-    "Jacques Martel",
-    "Enric Corbera",
-    "Salomon Sellam",
-]
+AUTHORS = ["Louise L. Hay", "Lisa Bourbeau", "Jacques Martel", "Enric Corbera", "Salomon Sellam"]
 
 
 def extract_field(text: str, patterns: list[str]) -> str:
@@ -112,16 +48,9 @@ def extract_field(text: str, patterns: list[str]) -> str:
         match = re.search(pattern, text, re.IGNORECASE | re.MULTILINE)
         if match:
             start = match.end()
-            lines = text[start:].split("\n")
+            lines = text[start:].split('\n')
             if len(lines) > 1 and lines[1].strip():
-                field_markers = [
-                    "conflicto",
-                    "causa",
-                    "modelo",
-                    "bloqueo",
-                    "etapa",
-                    "resentir",
-                ]
+                field_markers = ["conflicto", "causa", "modelo", "bloqueo", "etapa", "resentir"]
                 if not any(marker in lines[1].lower() for marker in field_markers):
                     return (lines[0].strip() + " " + lines[1].strip()).strip()
             return lines[0].strip()
@@ -137,19 +66,8 @@ def map_segment(segment: dict) -> dict:
 
     # Filter out navigation/noise segments
     BLACKLIST = {
-        "DE",
-        "A",
-        "EL",
-        "LA",
-        "LOS",
-        "LAS",
-        "DICCIONARIO",
-        "INDICE",
-        "ÍNDICE",
-        "PÁGINA",
-        "PAGINA",
-        "BIODESCODIFICACIÓN",
-        "BIODESCODIFICACION",
+        "DE", "A", "EL", "LA", "LOS", "LAS", "DICCIONARIO",
+        "INDICE", "ÍNDICE", "PÁGINA", "PAGINA"
     }
     if len(header) < 3 or header in BLACKLIST:
         return None
@@ -161,7 +79,7 @@ def map_segment(segment: dict) -> dict:
         "zonas_detectadas": [],
         "sistema_padre": "Desconocido",
         "interpretaciones": [],
-        "keywords": [],
+        "keywords": []
     }
 
     # 1. Detect Zones (Anatomical Mapping)
@@ -174,7 +92,7 @@ def map_segment(segment: dict) -> dict:
                 mapped_item["zonas_detectadas"].append(zone)
 
     # 2. Split content by Author to create multiple interpretations
-    author_pattern = r"(" + "|".join([re.escape(a) for a in AUTHORS]) + r")[\s:]+"
+    author_pattern = r'(' + '|'.join([re.escape(a) for a in AUTHORS]) + r')[\s:]+'
     parts = re.split(author_pattern, content, flags=re.IGNORECASE)
 
     if len(parts) > 1:
@@ -183,7 +101,7 @@ def map_segment(segment: dict) -> dict:
             auth_map = {a.upper(): a for a in AUTHORS}
             author_name = auth_map.get(raw_author_name.upper(), raw_author_name)
 
-            author_content = parts[i + 1] if i + 1 < len(parts) else ""
+            author_content = parts[i+1] if i+1 < len(parts) else ""
 
             interpretation = {
                 "autor": author_name,
@@ -209,11 +127,8 @@ def map_segment(segment: dict) -> dict:
                 ),
             }
 
-            # Fallback para autores sin prefijos o texto directo (ej. Jacques Martel o descripción pura)
-            if (
-                not interpretation["conflicto_emocional"]
-                and not interpretation["modelo_mental"]
-            ):
+            # Fallback para autores sin prefijos o texto directo
+            if not interpretation["conflicto_emocional"] and not interpretation["modelo_mental"]:
                 clean_content = author_content.strip()
                 if clean_content:
                     lines = clean_content.split("\n")
@@ -223,31 +138,57 @@ def map_segment(segment: dict) -> dict:
 
             mapped_item["interpretaciones"].append(interpretation)
     else:
-        mapped_item["interpretaciones"].append(
-            {
-                "autor": "General/No especificado",
-                "conflicto_emocional": extract_field(
-                    content,
-                    [
-                        r"Conflicto[\s\-—:|]+",
-                        r"Causa probable[\s\-—:|]+",
-                        r"Bloqueo Emocional[\s\-—:|]+",
-                        r"Resentir[\s\-—:|]+",
-                    ],
-                ),
-                "modelo_mental": extract_field(
-                    content,
-                    [
-                        r"Nuevo modelo mental[\s\-—:|]+",
-                        r"Bloqueo Mental[\s\-—:|]+",
-                        r"Bloqueo Espiritual[\s\-—:|]+",
-                    ],
-                ),
-                "etapa_biologica": extract_field(content, [r"(\d+[ªº]\s*Etapa.*)"]),
-            }
-        )
+        mapped_item["interpretaciones"].append({
+            "autor": "General/No especificado",
+            "conflicto_emocional": extract_field(
+                content,
+                [
+                    r"Conflicto[\s\-—:|]+",
+                    r"Causa probable[\s\-—:|]+",
+                    r"Bloqueo Emocional[\s\-—:|]+",
+                    r"Resentir[\s\-—:|]+",
+                ],
+            ),
+            "modelo_mental": extract_field(
+                content,
+                [
+                    r"Nuevo modelo mental[\s\-—:|]+",
+                    r"Bloqueo Mental[\s\-—:|]+",
+                    r"Bloqueo Espiritual[\s\-—:|]+",
+                ],
+            ),
+            "etapa_biologica": extract_field(content, [r"(\d+[ªº]\s*Etapa.*)"]),
+        })
 
-    # 3. Keywords
+    # 3. GLOBAL FALLBACK
+    for interp in mapped_item["interpretaciones"]:
+        if not interp["conflicto_emocional"] and not interp["modelo_mental"]:
+            if interp["autor"] == "General/No especificado":
+                target_text = content
+            else:
+                try:
+                    author_regex = re.compile(
+                        re.escape(interp["autor"]) + r"[\s:]+", re.IGNORECASE
+                    )
+                    match = author_regex.search(content)
+                    if match:
+                        target_text = content[match.end():]
+                        next_author_pattern = (
+                            r"(" + "|".join([re.escape(a) for a in AUTHORS]) + r")[\s:]+"
+                        )
+                        next_match = re.search(next_author_pattern, target_text, re.IGNORECASE)
+                        if next_match:
+                            target_text = target_text[:next_match.start()]
+                    else:
+                        target_text = content
+                except Exception:
+                    target_text = content
+
+            if target_text.strip():
+                lines = target_text.strip().split("\n")
+                interp["conflicto_emocional"] = (
+                    lines[0] + (" " + lines[1] if len(lines) > 1 else "")
+                ).strip()
+
     mapped_item["keywords"] = list(set(header.lower().split()))
-
     return mapped_item
