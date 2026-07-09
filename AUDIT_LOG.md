@@ -17,3 +17,7 @@
 - **Issue**: Segments like "DICCIONARIO", "DE", etc., were being treated as symptoms, increasing Empty Fields and noise.
 - **Action**: Implemented a BLACKLIST filter in `map_segment` to skip noise segments.
 - **Result**: Total items decreased from 980 to 949. Noise removed from `sintoma_canonico`. Empty Fields dropped from 35.23% to 22.35% (even with fewer items).
+
+## [cerrado] Tarea 2: Reducción de Empty Fields
+- Causa raíz 1: El header_pattern del fallback global no filtraba encabezados de navegación (índice, títulos de sección) tratados como síntomas -> filtro de blacklist agregado en map_segment().
+- Causa raíz 2: El fallback capturaba el nombre del síntoma pegado al inicio del contenido, en vez de solo el texto real -> fix con header_pattern.sub() en la lógica de limpieza de fallback.
