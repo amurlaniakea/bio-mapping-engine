@@ -6,7 +6,7 @@ import sys
 # Add the current directory to sys.path to allow importing from 'src'
 sys.path.append(os.getcwd())
 
-from src.parser.cleaner import clean_text
+from src.parser.cleaner import CleanText
 from src.parser.segmenter import segment_symptoms
 from src.parser.mapper import map_segment
 
@@ -37,7 +37,8 @@ def run_pipeline(input_path: str, output_path: str):
 
     # 2. Cleaning
     print("🧹 Cleaning text...")
-    cleaned_text = clean_text(full_text)
+    cleaner = CleanText()
+    cleaned_text = cleaner.clean(full_text)
 
     # 3. Segmentation
     print("✂️ Segmenting text into symptom blocks...")
@@ -50,7 +51,7 @@ def run_pipeline(input_path: str, output_path: str):
     for idx, segment in enumerate(segments):
         try:
             mapped = map_segment(segment)
-            if mapped is not None:
+            if mapped is not None and "error" not in mapped:
                 processed_data.append(mapped)
             if (idx + 1) % 50 == 0:
                 print(f"   ... mapped {idx+1}/{len(segments)} segments")
