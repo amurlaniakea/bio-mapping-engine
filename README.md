@@ -3,21 +3,21 @@
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agp3.0.html)
 [![Python Version](https://img.shields.io/badge/python-3.12%2B-blue)](https://www.python.org/)
 
-**Bio-Mapping Engine** is a high-fidelity data extraction and topological mapping tool designed to transform unstructured esoteric literature—specifically from the field of **Biodescodificación**—into a structured, searchable, and navigable knowledge base.
+**Bio-Mapping Engine** is a high-fidelity semantic extraction and topological mapping framework designed to transform unstructured esoteric literature—specifically from the field of **Biodescodificación**—into a structured, multidimensional, and navigable knowledge base.
 
-By applying a semantic segmentation and topological mapping approach, the engine extracts complex multidimensional relationships between biological symptoms, physical anatomical locations, and emotional conflict archetypes.
+Utilizing advanced semantic segmentation and topological mapping, the engine extracts and formalizes complex relational archetypes between biological symptoms, anatomical locations, and emotional conflict models.
 
 ---
 
 ## 🔍 Key Features
 
-* **Semantic Segmentation Engine:** Advanced topological segmentation that distinguishes between symptom headers, emotional content, and index noise.
-* **High-Fidelity Mapping:** Multi-vector extraction that maps symptoms to:
-    * **Canonical Symptoms:** Standardized disease/symptom names.
-    * **Anatomical Hierarchy:** Intelligent mapping from System $\rightarrow$ Region $\rightarrow$ Organ.
-    * **Emotional Archetypes:** Extraction of conflict descriptions and mental models (e.g., "Causa probable", "Bloqueo emocional").
-* **Multi-Axis Querying:** Powerful CLI for cross-referencing symptoms, physical zones, and emotional descriptions.
-* **Robust Fallback Mechanisms:** Intelligent text-scraping for authors (e.g., Jacques Martel) who do not use explicit structural prefixes.
+* **Advanced Semantic Segmentation:** Topological parsing that intelligently distinguishes between symptom headers, emotional content, and structural noise (indices/navigation).
+* **Multidimensional Relational Mapping:** High-fidelity extraction of complex relationships across three primary vectors:
+    * **Canonical Symptoms:** Standardized nomenclature for symptoms and conditions.
+    * **Anatomical Hierarchy:** Intelligent mapping from biological Systems $\\rightarrow$ Regions $\\rightarrow$ Organs.
+    * **Emotional Archetypes:** Structured extraction of emotional conflicts and mental models (e.g., "Causa probable", "Bloqueo emocional").
+* **Multi-Axis Querying:** A powerful CLI designed for cross-referencing symptoms, physical zones, and emotional archetypes.
+* **Robust Fallback Intelligence:** Heuristic text-scraping for authors (e.g., Jacques Martel) who lack explicit structural prefixes.
 
 ---
 
@@ -59,7 +59,7 @@ python main.py
 The engine will clean the text, segment it into symptom blocks, and map each block into a structured JSON format stored in `data/processed/`.
 
 ### 2. Query the Engine
-Use the CLI to explore the extracted knowledge.
+Get real-time insights using the CLI to explore the extracted knowledge base.
 
 **Search by Symptom:**
 ```bash
@@ -81,16 +81,18 @@ python src/cli/main.py --symptom "acné" --zone "cara"
 
 ## 🏛️ Architecture & Methodology
 
-This project is built following **Spec-Driven Development (SDD)**, ensuring high engineering rigor and traceability.
+Engineered under the **Spec-Driven Development (SDD)** lifecycle to ensure maximum technical rigor, traceability, and structural integrity.
 
 ### Data Pipeline Flow
-`Raw PDF` $\rightarrow$ `Text Cleaning` $\rightarrow$ `Semantic Segmentation` $\rightarrow$ `Semantic Mapping` $\rightarrow$ `Structured JSON`
+`Raw PDF` $\\rightarrow$ `Text Cleaning` $\\rightarrow$ `Semantic Segmentation` $\\rightarrow$ `Semantic Mapping` $\\rightarrow$ `Structured JSON`
 
 ### Data Schema
 The output is a high-fidelity JSON dataset. Each entry represents a canonical symptom and includes:
-- **Anatomical Zones:** A hierarchy of detected physical locations.
-- **Interpretations:** A list of mappings, including the author, emotional conflict, mental model, and biological stage.
-- **Keywords:** Extracted semantic tags for rapid indexing.
+| Field | Description |
+| :--- | :--- |
+| **Anatomical Zones** | A hierarchy of detected physical locations. |
+| **Interpretations** | A list of mappings, including the author, emotional conflict, mental model, and biological stage. |
+| **Keywords** | Extracted semantic tags for rapid indexing. |
 
 ---
 
@@ -109,4 +111,3 @@ This project is licensed under the **GNU Affero General Public License v3.0 (AGP
 ## 👤 Author
 
 **Pedro Sordo Martínez** — [amurlaniakea@gmail.com](mailto:amurlaniakea@gmail.com)
-# Trigger Analysis
