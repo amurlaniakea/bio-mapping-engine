@@ -42,7 +42,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
-            -Dsonar.projectKey=amurlaniakea_bio-mapping-engine
+            -Dsonar.projectKey=bio-mapping-motor
             -Dsonar.organization=amurlaniakea
             -Dsonar.python.version=3.12
             -Dsonar.sources=src
