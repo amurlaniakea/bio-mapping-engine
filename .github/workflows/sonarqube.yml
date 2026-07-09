@@ -12,8 +12,7 @@ jobs:
     name: SonarQube Analysis
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -29,8 +28,7 @@ jobs:
           pip install flake8 mypy pytest black
 
       - name: Run Linting (flake8)
-        run: |
-          flake8 src/ ./tests/ --max-line-length=120
+        run: flake8 src/ ./tests/ --max-line-length=120
 
       - name: Run Tests (pytest)
         run: |
@@ -38,13 +36,14 @@ jobs:
           pytest tests/
 
       - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@master
+        uses: SonarSource/sonarqube-scan-action@v5.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
             -Dsonar.projectKey=amurlaniakea_bio-mapping-engine
+            -Dsonar.organization=amurlaniakea
             -Dsonar.python.version=3.12
             -Dsonar.sources=src
             -Dsonar.tests=tests
