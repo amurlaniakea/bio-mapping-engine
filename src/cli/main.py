@@ -55,8 +55,8 @@ class CLIHandler:
                 header_text += f"[bold magenta]Zonas:[/bold magenta] {zones}\n"
 
             panel_content = Text()
-            panel_content.append(header_text)
-            panel_content.append("\n[bold yellow]Interpretaciones relevantes:[/bold yellow]\n")
+            panel_content.append(Text.from_markup(header_text))
+            panel_content.append(Text.from_markup("\n[bold yellow]Interpretaciones relevantes:[/bold yellow]\n"))
 
             interpretations = item.get("interpretaciones", [])
             
@@ -79,12 +79,12 @@ class CLIHandler:
                     etapa = interp.get("etapa_biologica", "N/A")
 
                     # Añadimos la interpretación con un formato limpio
-                    panel_content.append(f"  • [bold white]Autor:[/bold white] {author}\n")
-                    panel_content.append(f"    [italic]Conflicto:[/italic] {conflicto}\n")
+                    panel_content.append(Text.from_markup(f"  • [bold white]Autor:[/bold white] {author}\n"))
+                    panel_content.append(Text.from_markup(f"    [italic]Conflicto:[/italic] {conflicto}\n"))
                     if modelo:
-                        panel_content.append(f"    [italic]Modelo:[/italic] {modelo}\n")
+                        panel_content.append(Text.from_markup(f"    [italic]Modelo:[/italic] {modelo}\n"))
                     if etapa:
-                        panel_content.append(f"    [italic]Etapa:[/italic] {etapa}\n")
+                        panel_content.append(Text.from_markup(f"    [italic]Etapa:[/italic] {etapa}\n"))
                     panel_content.append("  " + "-"*30 + "\n")
 
             console.print(Panel(panel_content, title=title, expand=False))
