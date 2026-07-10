@@ -23,7 +23,9 @@ class CleanText:
         text = re.sub(r"[ \t]+", " ", text)
 
         # 4. Normalize newlines: replace 3+ newlines with just 2
-        text = re.sub(r"\n\s*\n\s*\n+", "\n\n", text)
+        # Use a simpler approach to avoid ReDoS from backtracking
+        while "\n\n\n" in text:
+            text = text.replace("\n\n\n", "\n\n")
 
         # 5. Strip leading/trailing whitespace from the whole document
         return text.strip()

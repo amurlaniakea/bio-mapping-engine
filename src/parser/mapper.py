@@ -16,7 +16,7 @@ ANATOMICAL_KEYWORDS = {
         "lengua", "nariz", "oídos", "oído", "ojos"
     ],
     "espalda": ["espalda", "dorsal", "lumbar", "vertebra", "columna", "raquis"],
-    "cuello": ["cuello", "cervical", "garganta", "faringe"],
+    "cuello": ["cuello", "cervical", "garganta", "farínge"],
     "pecho": [
         "pecho", "tórax", "pulmón", "respiratorio", "tráquea", "bronquio",
         "respiración", "aire"
@@ -38,7 +38,13 @@ ANATOMICAL_KEYWORDS = {
 
 
 # Authors found in the document
-AUTHORS = ["Louise L. Hay", "Lisa Bourbeau", "Jacques Martel", "Enric Corbera", "Salomon Sellam"]
+AUTHORS = [
+    "Louise L. Hay",
+    "Lisa Bourbeau",
+    "Jacques Martel",
+    "Enric Corbera",
+    "Salomon Sellam"
+]
 
 
 def extract_field(text: str, patterns: list[str]) -> str:
@@ -63,83 +69,90 @@ def _detect_zones(header: str, content: str) -> list[str]:
         if any(kw in content_lower for kw in keywords) or any(
             kw in header_lower for kw in keywords
         ):
-            if zone not in zones:
-                zones.append(zone)
+            zones.append(zone)
     return zones
+
+
+def _extract_author_interpretation(
+    author_name: str, author_content: str, header_val: str
+) -> dict:
+    """Extract interpretation fields for a specific author."""
+    interpretation = {
+        "autor": author_name,
+        "conflicto_emocional": extract_field(
+            author_content,
+            [
+                r"Conflicto[\s\-\—:|]+(.*)",
+                r"Causa probable[\s\-\—:|]+(.*)",
+                r"Bloqueo Emocional[\s\-\—:|]+(.*)",
+                r"Resentir[\s\-\—:|]+(.*)",
+            ],
+        ),
+        "modelo_mental": extract_field(
+            author_content,
+            [
+                r"Nuevo modelo mental[\s\-\—:|]+(.*)",
+                r"Bloqueo Mental[\s\-\—:|]+(.*)",
+                r"Bloqueo Espiritual[\s\-\—:|]+(.*)",
+            ],
+        ),
+        "etapa_biologica": extract_field(
+            author_content, [r"(\d+[ªº]\s*Etapa.*)"]
+        ),
+    }
+
+    # Fallback para autores sin prefijos o texto directo
+    if not interpretation["conflicto_emocional"] and not interpretation["modelo_mental"]:
+        clean_content = author_content.strip()
+        if clean_content:
+            lines = clean_content.split("\n")
+            content_to_use = lines[0].strip()
+            if len(lines) > 1:
+                content_to_use += " " + lines[1].strip()
+
+            # LIMPIEZA CRÍTICA: Eliminar el prefijo del síntoma si se ha colado
+            header_pattern = re.compile(f"^{re.escape(header_val)}", re.IGNORECASE)
+            interpretation["conflicto_emocional"] = header_pattern.sub("", content_to_use).strip()
+
+    return interpretation
 
 
 def _get_interpretations(content: str, header_val: str) -> list[dict]:
     """Extract author-based interpretations."""
-    author_pattern = r'(' + '|'.join([re.escape(a) for a in AUTHORS]) + r')[\\s:]+'
+    author_pattern = r'(' + '|'.join([re.escape(a) for a in AUTHORS]) + r')[\s:]+'
     parts = re.split(author_pattern, content, flags=re.IGNORECASE)
     interpretations = []
 
     if len(parts) > 1:
+        auth_map = {a.upper(): a for a in AUTHORS}
         for i in range(1, len(parts), 2):
             raw_author_name = parts[i].strip()
-            auth_map = {a.upper(): a for a in AUTHORS}
             author_name = auth_map.get(raw_author_name.upper(), raw_author_name)
-            author_content = parts[i+1] if i+1 < len(parts) else ""
-
-            interpretation = {
-                "autor": author_name,
-                "conflicto_emocional": extract_field(
-                    author_content,
-                        [
-                            r"Conflicto[\\s\\-—:|]+(.*)",
-                            r"Causa probable[\\s\\-—:|]+(.*)",
-                            r"Bloqueo Emocional[\\s\\-—:|]+(.*)",
-                            r"Resentir[\\s\\-—:|]+(.*)",
-                        ],
-                        ),
-                        "modelo_mental": extract_field(
-                        content,
-                        [
-                            r"Nuevo modelo mental[\\s\\-—:|]+(.*)",
-                            r"Bloqueo Mental[\\s\\-—:|]+(.*)",
-                            r"Bloqueo Espiritual[\\s\\-—:|]+(.*)",
-                        ],
-                        ),
-                "etapa_biologica": extract_field(
-                    author_content, [r"(\d+[ªº]\s*Etapa.*)"]
-                ),
-            }
-
-            # Fallback para autores sin prefijos o texto directo
-            if not interpretation["conflicto_emocional"] and not interpretation["modelo_mental"]:
-                clean_content = author_content.strip()
-                if clean_content:
-                    lines = clean_content.split("\n")
-                    content_to_use = lines[0].strip()
-                    if len(lines) > 1:
-                        content_to_use += " " + lines[1].strip()
-
-                    # LIMPIEZA CRÍTICA: Eliminar el prefijo del síntoma si se ha colado
-                    header_pattern = re.compile(f"^{re.escape(header_val)}", re.IGNORECASE)
-                    interpretation["conflicto_emocional"] = header_pattern.sub("", content_to_use).strip()
-
-            interpretations.append(interpretation)
+            author_content = parts[i + 1] if i + 1 < len(parts) else ""
+            interpretations.append(
+                _extract_author_interpretation(author_name, author_content, header_val)
+            )
     else:
         # General fallback
         interpretations.append({
             "autor": "General/No especificado",
             "conflicto_emocional": extract_field(
                 content,
-                    [
-                        r"Conflicto[\\s\\-—:|]+(.*)",
-                        r"Causa probable[\\s\\-—:|]+(.*)",
-                        r"Bloqueo Emocional[\\s\\-—:|]+(.*)",
-                        r"Resentir[\\s\\-—:|]+(.*)",
-                    ],
-                ),
-                "modelo_mental": extract_field(
-                    content,
-                    [
-                        r"Nuevo modelo mental[\\s\\-—:|]+(.*)",
-                        r"Bloqueo Mental[\\s\\-—:|]+(.*)",
-                        r"Bloqueo Espiritual[\\s\\-—:|]+(.*)",
-                    ],
-                ),
+                [
+                    r"Conflicto[\s\-\—:|]+(.*)",
+                    r"Causa probable[\s\-\—:|]+(.*)",
+                    r"Bloqueo Emocional[\s\-\—:|]+(.*)",
+                    r"Resentir[\s\-\—:|]+(.*)",
+                ],
+            ),
+            "modelo_mental": extract_field(
+                content,
+                [
+                    r"Nuevo modelo mental[\s\-\—:|]+(.*)",
+                    r"Bloqueo Mental[\s\-\—:|]+(.*)",
+                    r"Bloqueo Espiritual[\s\-\—:|]+(.*)",
+                ],
+            ),
             "etapa_biologica": extract_field(content, [r"(\d+[ªº]\s*Etapa.*)"]),
         })
     return interpretations
@@ -150,46 +163,61 @@ def normalize_symptom(name: str) -> str:
     return re.sub(r'^(EL|LA|LOS|LAS)\s+', '', name.strip(), flags=re.IGNORECASE).strip()
 
 
+def _find_author_section(content: str, author: str, all_authors: list[str]) -> str:
+    """Find the text section for a specific author."""
+    if author == "General/No especificado":
+        return content
+
+    try:
+        author_regex = re.compile(
+            re.escape(author) + r"[\s:]+", re.IGNORECASE
+        )
+        match = author_regex.search(content)
+        if not match:
+            return content
+
+        target_text = content[match.end():]
+        next_author_pattern = (
+            r"(" + "|".join([re.escape(a) for a in all_authors]) + r")[\s:]+"
+        )
+        next_match = re.search(next_author_pattern, target_text, re.IGNORECASE)
+        if next_match:
+            target_text = target_text[:next_match.start()]
+        return target_text
+    except Exception:
+        return content
+
+
+def _extract_fallback_conflict(text: str, header_val: str) -> str | None:
+    """Extract conflict emotional from fallback text."""
+    if not text.strip():
+        return None
+
+    lines = text.strip().split("\n")
+    content_part = lines[0].strip()
+
+    # Limpiar prefijo del header
+    header_pattern = re.compile(f"^{re.escape(header_val)}", re.IGNORECASE)
+    content_part = header_pattern.sub("", content_part).strip()
+
+    if content_part:
+        result = content_part
+        if len(lines) > 1:
+            result += " " + lines[1].strip()
+        return result.strip()
+    elif len(lines) > 1:
+        return lines[1].strip()
+    return None
+
+
 def _apply_global_fallback(mapped_item: dict, content: str, header_val: str) -> None:
     """Apply fallback if no author-based interpretations found."""
     for interp in mapped_item["interpretaciones"]:
         if not interp["conflicto_emocional"] and not interp["modelo_mental"]:
-            if interp["autor"] == "General/No especificado":
-                target_text = content
-            else:
-                try:
-                    author_regex = re.compile(
-                        re.escape(interp["autor"]) + r"[\s:]+", re.IGNORECASE
-                    )
-                    match = author_regex.search(content)
-                    if match:
-                        target_text = content[match.end():]
-                        next_author_pattern = (
-                            r"(" + "|".join([re.escape(a) for a in AUTHORS]) + r")[\s:]+"
-                        )
-                        next_match = re.search(next_author_pattern, target_text, re.IGNORECASE)
-                        if next_match:
-                            target_text = target_text[:next_match.start()]
-                    else:
-                        target_text = content
-                except Exception:
-                    target_text = content
-
-            if target_text.strip():
-                lines = target_text.strip().split("\n")
-                content_part = lines[0].strip()
-
-                # Limpiar prefijo del header
-                header_pattern = re.compile(f"^{re.escape(header_val)}", re.IGNORECASE)
-                content_part = header_pattern.sub("", content_part).strip()
-
-                if content_part:
-                    interp["conflicto_emocional"] = (
-                        content_part
-                        + (" " + lines[1].strip() if len(lines) > 1 else "")
-                    ).strip()
-                elif len(lines) > 1:
-                    interp["conflicto_emocional"] = lines[1].strip()
+            target_text = _find_author_section(content, interp["autor"], AUTHORS)
+            conflict = _extract_fallback_conflict(target_text, header_val)
+            if conflict:
+                interp["conflicto_emocional"] = conflict
 
 
 def map_segment(segment: dict) -> dict:

@@ -1,80 +1,91 @@
 import re
 
+# Pre-compiled patterns
+HEADER_PATTERN = re.compile(r"^[A-ZÁÉÍÓÚÑ ]+$")
+ARTICLE_PREFIX = re.compile(r"^(EL|LA|LOS|LAS)\s+", re.IGNORECASE)
+INDEX_ENTRY_SUFFIX = tuple(str(i) for i in range(10))
 
-def segment_symptoms(text):
-    header_pattern = re.compile(r"^[A-ZÁÉÍÓÚÑ ]+$")
-    AUTHORS = [
-        "Louise L. Hay",
-        "Lisa Bourbeau",
-        "Jacques Martel",
-        "Enric Corbera",
-        "Salomon Sellam",
-    ]
+AUTHORS = [
+    "Louise L. Hay",
+    "Lisa Bourbeau",
+    "Jacques Martel",
+    "Enric Corbera",
+    "Salomon Sellam",
+]
 
+
+def _normalize_header(header: str) -> str:
+    """Normalize header by removing Spanish article prefixes."""
+    return ARTICLE_PREFIX.sub("", header).upper()
+
+
+def _is_header(line: str) -> bool:
+    """Check if line is a valid header (uppercase, not an author)."""
+    return bool(HEADER_PATTERN.match(line)) and not _is_author(line)
+
+
+def _is_author(line: str) -> bool:
+    """Check if line matches any known author."""
+    line_upper = line.upper()
+    return any(line_upper == auth.upper() for auth in AUTHORS)
+
+
+def _is_index_entry(line: str) -> bool:
+    """Check if line is an index entry (ends with digit)."""
+    return line.endswith(INDEX_ENTRY_SUFFIX) and bool(
+        re.search(r"\s+\d+$", line)
+    )
+
+
+def _close_segment(segments: list, header: str | None, content: list) -> None:
+    """Close current segment and add to segments list."""
+    if header:
+        segments.append(
+            {"header": header, "content": "\n".join(content).strip()}
+        )
+
+
+def segment_symptoms(text: str) -> list[dict]:
+    """Parse text into symptom segments by headers and authors."""
     lines = text.split("\n")
     segments = []
     current_header = None
     current_content = []
 
     for line in lines:
-        stripped_line = line.strip()
-        if not stripped_line:
+        stripped = line.strip()
+        if not stripped:
             continue
 
-        is_header = bool(header_pattern.match(stripped_line))
-        is_author = any(stripped_line.upper() == auth.upper() for auth in AUTHORS)
-        is_index_entry = bool(re.search(r"\s+\d+$", stripped_line))
-
-        if is_index_entry:
+        if _is_index_entry(stripped):
             continue
 
-        if is_header and not is_author:
-            # Normalize for comparison (e.g., "EL PERITONEO" vs "PERITONEO")
-            norm_new = re.sub(
-                r"^(EL|LA|LOS|LAS)\s+", "", stripped_line, flags=re.IGNORECASE
-            )
+        if _is_header(stripped):
+            norm_new = _normalize_header(stripped)
 
             if current_header:
-                norm_curr = re.sub(
-                    r"^(EL|LA|LOS|LAS)\s+", "", current_header, flags=re.IGNORECASE
-                )
-
-                if norm_new.upper() == norm_curr.upper():
-                    # MERGE: The new header is a duplicate.
-                    # We skip adding it as a new header and just continue to add its content.
-                    # Note: Since headers themselves don't have content, this effectively
-                    # merges the lines following the duplicate header into the current segment.
+                norm_curr = _normalize_header(current_header)
+                if norm_new == norm_curr:
+                    # Duplicate header - merge content, continue
                     pass
                 else:
-                    # New unique header: close previous
-                    segments.append(
-                        {
-                            "header": current_header,
-                            "content": "\n".join(current_content).strip(),
-                        }
-                    )
-                    current_header = stripped_line
+                    _close_segment(segments, current_header, current_content)
+                    current_header = stripped
                     current_content = []
             else:
-                current_header = stripped_line
+                current_header = stripped
                 current_content = []
-        elif is_author:
+
+        elif _is_author(stripped):
             if current_header:
                 current_content.append(line)
+
         else:
             if current_header:
                 current_content.append(line)
             else:
-                # Avoid creating UNKNOWN segments if possible, but for robustness:
                 current_header = "UNKNOWN"
                 current_content.append(line)
 
-    if current_header:
-        segments.append(
-            {
-                "header": current_header,
-                "content": "\n".join(current_content).strip(),
-            }
-        )
-
+    _close_segment(segments, current_header, current_content)
     return segments
