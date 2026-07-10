@@ -36,7 +36,6 @@ ANATOMICAL_KEYWORDS = {
     "otros": ["órgano", "glándula", "hormona", "sistema"]
 }
 
-
 # Authors found in the document
 AUTHORS = ["Louise L. Hay", "Lisa Bourbeau", "Jacques Martel", "Enric Corbera", "Salomon Sellam"]
 
@@ -48,14 +47,11 @@ def extract_field(text: str, patterns: list[str]) -> str:
     for pattern in patterns:
         match = re.search(pattern, text, re.IGNORECASE | re.MULTILINE)
         if match:
-            start = match.end()
-            lines = text[start:].split("\n")
-            if len(lines) > 1 and lines[1].strip():
-                field_markers = ["conflicto", "causa", "modelo", "bloqueo", "etapa", "resentir"]
-                if not any(marker in lines[1].lower() for marker in field_markers):
-                    return (lines[0].strip() + " " + lines[1].strip()).strip()
-            return lines[0].strip()
+            # If the pattern matches a group, use it, otherwise use the whole match
+            content = match.group(1) if match.groups() else match.group(0)
+            return content.strip()
     return ""
+
 
 
 def _detect_zones(header: str, content: str) -> list[str]:
@@ -74,7 +70,7 @@ def _detect_zones(header: str, content: str) -> list[str]:
 
 def _get_interpretations(content: str, header_val: str) -> list[dict]:
     """Extract author-based interpretations."""
-    author_pattern = r'(' + '|'.join([re.escape(a) for a in AUTHORS]) + r')[\s:]+'
+    author_pattern = r'(' + '|'.join([re.escape(a) for a in AUTHORS]) + r')[\\s:]+'
     parts = re.split(author_pattern, content, flags=re.IGNORECASE)
     interpretations = []
 
@@ -90,22 +86,22 @@ def _get_interpretations(content: str, header_val: str) -> list[dict]:
                 "conflicto_emocional": extract_field(
                     author_content,
                     [
-                        r"Conflicto[\s\-—:|]+",
-                        r"Causa probable[\s\-—:|]+",
-                        r"Bloqueo Emocional[\s\-—:|]+",
-                        r"Resentir[\s\-—:|]+",
+                        r"Conflicto[\\s\\-—:|]+(.*)",
+                        r"Causa probable[\\s\\-—:|]+(.*)",
+                        r"Bloqueo Emocional[\\s\\-—:|]+(.*)",
+                        r"Resentir[\\s\\-—:|]+(.*)",
                     ],
                 ),
                 "modelo_mental": extract_field(
                     author_content,
                     [
-                        r"Nuevo modelo mental[\s\-—:|]+",
-                        r"Bloqueo Mental[\s\-—:|]+",
-                        r"Bloqueo Espiritual[\s\-—:|]+",
+                        r"Nuevo modelo mental[\\s\\-—:|]+(.*)",
+                        r"Bloqueo Mental[\\s\\-\\-—:|]+(.*)",
+                        r"Bloqueo Espiritual[\\s\\-\\-—:|]+(.*)",
                     ],
                 ),
                 "etapa_biologica": extract_field(
-                    author_content, [r"(\d+[ªº]\s*Etapa.*)"]
+                    author_content, [r"(\\d+[ªº]\\s*Etapa.*)"]
                 ),
             }
 
@@ -130,21 +126,21 @@ def _get_interpretations(content: str, header_val: str) -> list[dict]:
             "conflicto_emocional": extract_field(
                 content,
                 [
-                    r"Conflicto[\s\-—:|]+",
-                    r"Causa probable[\s\-—:|]+",
-                    r"Bloqueo Emocional[\s\-—:|]+",
-                    r"Resentir[\s\-—:|]+",
+                    r"Conflicto[\\s\\-—:|]+",
+                    r"Causa probable[\\s\\-—:|]+",
+                    r"Bloqueo Emocional[\\s\\-\\-—:|]+",
+                    r"Resentir[\\s\\-\\-—:|]+",
                 ],
             ),
             "modelo_mental": extract_field(
                 content,
                 [
-                    r"Nuevo modelo mental[\s\-—:|]+",
-                    r"Bloqueo Mental[\s\-—:|]+",
-                    r"Bloqueo Espiritual[\s\-—:|]+",
+                    r"Nuevo modelo mental[\\s\\-—:|]+",
+                    r"Bloqueo Mental[\\s\\-\\-—:|]+",
+                    r"Bloqueo Espiritual[\\s\\-\\-—:|]+",
                 ],
             ),
-            "etapa_biologica": extract_field(content, [r"(\d+[ªº]\s*Etapa.*)"]),
+            "etapa_biologica": extract_field(content, [r"(\\d+[ªº]\\s*Etapa.*)"]),
         })
     return interpretations
 

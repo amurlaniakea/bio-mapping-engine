@@ -17,10 +17,16 @@ class SearchEngine:
             self.data = []
 
     def _normalize(self, text: str) -> str:
-        """Normalizes text for easier comparison."""
+        """Normalizes text for easier comparison by removing accents and special chars."""
+        import unicodedata
         if not text:
             return ""
-        return re.sub(r"[^\w\s]", "", text.lower()).strip()
+        # Normalize to NFD to separate accents from characters
+        text = unicodedata.normalize('NFD', text.lower())
+        # Remove non-spacing mark characters (accents)
+        text = "".join(c for c in text if unicodedata.category(c) != 'Mn')
+        # Remove non-word/non-space characters
+        return re.sub(r"[^\w\s]", "", text).strip()
 
     def search_by_symptom(self, query: str) -> list[dict]:
         """Search by the canonical symptom name."""
