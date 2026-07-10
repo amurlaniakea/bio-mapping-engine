@@ -32,8 +32,8 @@ jobs:
         run: |
           pytest --cov=bio_mapping_engine --cov-report=xml
 
-      - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-scan-action@v5
+      - name: SonarCloud Scan Oficial
+        uses: SonarSource/sonarcloud-scan-action@v4
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
