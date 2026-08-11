@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Pedro Sordo Martínez <amurlaniakea@gmail.com>
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
 import pytest
 import uuid
 from src.parser.mapper import map_segment, AUTHORS, _get_interpretations, _apply_global_fallback
