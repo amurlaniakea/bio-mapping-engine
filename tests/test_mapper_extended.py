@@ -1,6 +1,4 @@
-import pytest
-import uuid
-from src.parser.mapper import map_segment, AUTHORS, _get_interpretations, _apply_global_fallback
+from src.parser.mapper import map_segment, _get_interpretations, _apply_global_fallback
 
 
 def test_map_segment_basic():
@@ -87,7 +85,7 @@ def test_map_segment_complex_interpretation():
     # Let's check how many interpretations we get.
     # The author_pattern is 'Jacques Martel[\\s:]+'
     # parts will be ['', 'Jacques Martel', ' Nuevo modelo mental: El espejo. Resentir: No ser escuchado.']
-    # Loop: i=1. raw_author_name = 'Jacques Martel'. 
+    # Loop: i=1. raw_author_name = 'Jacques Martel'.
     # author_content = ' Nuevo modelo mental: El espejo. Resentir: No ser escuchado.'
     # extract_field for conflicto_emocional will use [\\s:]+ patterns.
     # 'Resentir: No ser escuchado.' might not match the pattern if it's not in the author_content.

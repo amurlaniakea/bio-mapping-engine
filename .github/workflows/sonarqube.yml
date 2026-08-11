@@ -1,4 +1,4 @@
-name: SonarCloud Scan
+name: SonarCloud Analysis
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
 
 jobs:
   sonarqube:
-    name: SonarQube Analysis
+    name: SonarCloud Scan
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -35,7 +35,7 @@ jobs:
           export PYTHONPATH=$PYTHONPATH:$(pwd)
           pytest tests/ --cov=src --cov-report=xml
 
-      - name: SonarCloud Scan
+      - name: SonarCloud Analysis
         uses: SonarSource/sonarqube-scan-action@v5.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
