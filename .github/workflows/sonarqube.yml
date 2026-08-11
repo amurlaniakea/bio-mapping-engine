@@ -11,6 +11,11 @@ jobs:
   sonarqube:
     name: SonarCloud Scan
     runs-on: ubuntu-latest
+    # Patrón de la flota (ssb-validate, centinela): el análisis de SonarCloud
+    # corre solo en push a main y no bloquea PRs (continue-on-error). El gate
+    # de PRs es el job test de Python CI.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
         with:
