@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 import argparse
-import json
 import os
 import sys
 from rich.console import Console
@@ -17,6 +16,7 @@ except ImportError:
     from src.engine.search import SearchEngine
 
 console = Console()
+
 
 class CLIHandler:
     def __init__(self, engine: SearchEngine):
@@ -40,11 +40,11 @@ class CLIHandler:
 
     def _display_results(self, results: list[dict], query: str = None, content_mode: bool = False):
         console.print(f"\n[bold green]✅ {len(results)} coincidencia(s) encontrada(s):[/bold green]\n")
-        
+
         for idx, item in enumerate(results, 1):
             symptom_name = item.get("sintoma_canonico", "Desconocido")
             zones = ", ".join(item.get("zonas_detectadas", []))
-            
+
             # Construcción del encabezado del Panel
             if content_mode:
                 # Si buscamos texto, aclaramos que el síntoma es solo el contenedor del match
@@ -62,14 +62,14 @@ class CLIHandler:
             panel_content.append(Text.from_markup("\n[bold yellow]Interpretaciones relevantes:[/bold yellow]\n"))
 
             interpretations = item.get("interpretaciones", [])
-            
+
             # Filtro de granularidad: Si hay una query de texto, solo mostramos la interpretación que coincide
             if query:
                 q = query.lower()
                 interpretations = [
-                    i for i in interpretations 
-                    if q in i.get("conflicto_emocional", "").lower() or 
-                       q in i.get("modelo_mental", "").lower()
+                    i for i in interpretations
+                    if q in i.get("conflicto_emocional", "").lower() or
+                    q in i.get("modelo_mental", "").lower()
                 ]
 
             if not interpretations:
@@ -92,6 +92,7 @@ class CLIHandler:
 
             console.print(Panel(panel_content, title=title, expand=False))
 
+
 def main():
     parser = argparse.ArgumentParser(description="Bio-Mapping Engine CLI")
     parser.add_argument("--symptom", help="Buscar por nombre de síntoma (ej: acné)")
@@ -111,6 +112,7 @@ def main():
     engine = SearchEngine(data_path)
     handler = CLIHandler(engine)
     handler.handle(args)
+
 
 if __name__ == "__main__":
     main()

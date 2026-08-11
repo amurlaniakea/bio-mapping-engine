@@ -1,4 +1,4 @@
-name: SonarCloud Scan
+name: SonarCloud Analysis
 
 on:
   push:
@@ -9,8 +9,13 @@ on:
 
 jobs:
   sonarqube:
-    name: SonarQube Analysis
+    name: SonarCloud Scan
     runs-on: ubuntu-latest
+    # Patrón de la flota (ssb-validate, centinela): el análisis de SonarCloud
+    # corre solo en push a main y no bloquea PRs (continue-on-error). El gate
+    # de PRs es el job test de Python CI.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
         with:
@@ -36,15 +41,7 @@ jobs:
           pytest tests/ --cov=src --cov-report=xml
 
       - name: SonarCloud Scan
-        uses: SonarSource/sonarqube-scan-action@v5.0.0
+        uses: SonarSource/sonarcloud-github-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        with:
-          args: >
-            -Dsonar.projectKey=amurlaniakea_bio-mapping-engine
-            -Dsonar.organization=amurlaniakea
-            -Dsonar.python.version=3.12
-            -Dsonar.sources=src
-            -Dsonar.tests=tests
-            -Dsonar.python.coverage.reportPaths=coverage.xml
